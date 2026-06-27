@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { env } from "../config/env.js";
 import { OTP } from "../models/otp.model.js";
 import { generateOTP, hashOTP, verifyOTP, getOTPExpiry } from "../utils/otp.util.js";
-import { sendOTP } from "../services/email.service.js";
+import { EmailService } from "../services/email/EmailService.js";
 
 const cookieOptions = {
   httpOnly: true,
@@ -79,7 +79,7 @@ export const signupUser = asyncHandler(async (req, res) => {
     userData: { name, password }
   });
 
-  await sendOTP(email, otp, "signup");
+  await EmailService.sendSignupOTP(email, otp);
 
   return res.status(201).json(
     new ApiResponse(
@@ -166,7 +166,13 @@ export const resendOTP = asyncHandler(async (req, res) => {
     ...(userData && { userData })
   });
 
-  await sendOTP(email, otp, purpose);
+  if (purpose === "signup") {
+    await EmailService.sendSignupOTP(email, otp);
+  } else if (purpose === "forgot_password") {
+    await EmailService.sendForgotPasswordOTP(email, otp);
+  } else if (purpose === "change_password") {
+    await EmailService.sendChangePasswordOTP(email, otp);
+  }
 
   return res.status(200).json(new ApiResponse(200, {}, "OTP resent successfully"));
 });
@@ -304,7 +310,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     expiresAt: getOTPExpiry()
   });
 
-  await sendOTP(email, otp, "forgot_password");
+  await EmailService.sendForgotPasswordOTP(email, otp);
 
   return res.status(200).json(new ApiResponse(200, {}, "If your email is registered, you will receive an OTP."));
 });
@@ -402,7 +408,7 @@ export const sendChangePasswordOTP = asyncHandler(async (req, res) => {
     expiresAt: getOTPExpiry()
   });
 
-  await sendOTP(user.email, otp, "change_password");
+  await EmailService.sendChangePasswordOTP(user.email, otp);
 
   return res.status(200).json(new ApiResponse(200, {}, "OTP sent successfully to your email."));
 });

@@ -21,11 +21,10 @@ const requiredEnvVars = [
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
   "CLOUDINARY_API_SECRET",
-  "SMTP_HOST",
-  "SMTP_PORT",
-  "SMTP_USER",
-  "SMTP_PASS",
-  "SMTP_FROM_EMAIL"
+  "BREVO_API_KEY",
+  "BREVO_ADMIN_EMAIL",
+  "RESEND_API_KEY",
+  "RESEND_FROM"
   // GEMINI_API_KEY is optional — falls back to heuristic-only if absent
 ];
 
@@ -57,9 +56,8 @@ export const env = {
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
   geminiApiKey: process.env.GEMINI_API_KEY || null,
-  smtpHost: process.env.SMTP_HOST,
-  smtpPort: process.env.SMTP_PORT,
-  smtpUser: process.env.SMTP_USER,
-  smtpPass: process.env.SMTP_PASS,
-  smtpFromEmail: process.env.SMTP_FROM_EMAIL
+  brevoApiKey: process.env.BREVO_API_KEY,
+  brevoAdminEmail: process.env.BREVO_ADMIN_EMAIL,
+  resendApiKey: process.env.RESEND_API_KEY,
+  resendFrom: process.env.RESEND_FROM
 };
