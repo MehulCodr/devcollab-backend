@@ -5,24 +5,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoutes";
 import { useAuth } from "@/context/AuthContext";
+import {
+  LayoutDashboard,
+  Building2,
+  FolderKanban,
+  CheckSquare,
+  Sparkles,
+  Bell,
+  Settings
+} from "lucide-react";
 
 const navItems = [
-  {
-    label: "Dashboard",
-    href: "/dashboard"
-  },
-  {
-    label: "Recommendations",
-    href: "/recommendations"
-  },
-  {
-    label: "Profile",
-    href: "/profile"
-  },
-  {
-    label: "Notifications",
-    href: "/notifications"
-  }
+  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Organizations", href: "/organizations", icon: Building2 },
+  { label: "Projects", href: "/projects", icon: FolderKanban },
+  { label: "Tasks", href: "/tasks", icon: CheckSquare },
+  { label: "AI Assistant", href: "/ai-assistant", icon: Sparkles },
+  { label: "Notifications", href: "/notifications", icon: Bell },
+  { label: "Profile", href: "/profile", icon: Settings }
 ];
 
 export default function AppShell({
@@ -57,6 +57,7 @@ export default function AppShell({
             <nav className="flex-1 p-4 space-y-2">
               {navItems.map((item) => {
                 const active = pathname === item.href;
+                const Icon = item.icon;
 
                 return (
                   <Link
@@ -64,10 +65,11 @@ export default function AppShell({
                     href={item.href}
                     className={
                       active
-                        ? "block rounded-xl bg-blue-600 px-4 py-3 font-medium text-white"
-                        : "block rounded-xl px-4 py-3 font-medium text-slate-400 hover:bg-slate-900 hover:text-white"
+                        ? "flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition-colors"
+                        : "flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-slate-400 hover:bg-slate-900 hover:text-white transition-colors"
                     }
                   >
+                    <Icon className="w-5 h-5" />
                     {item.label}
                   </Link>
                 );
@@ -103,34 +105,17 @@ export default function AppShell({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex lg:hidden gap-3">
-                      <Link
-                        href="/dashboard"
-                        className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900"
-                      >
-                        Dashboard
-                      </Link>
-
-                      <Link
-                        href="/recommendations"
-                        className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900"
-                      >
-                        Recommendations
-                      </Link>
-
-                      <Link
-                        href="/notifications"
-                        className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900"
-                      >
-                        Notifications
-                      </Link>
-
-                      <Link
-                        href="/profile"
-                        className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900"
-                      >
-                        Profile
-                      </Link>
+                    <div className="flex lg:hidden gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      {navItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className="flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900"
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.label}
+                        </Link>
+                      ))}
                     </div>
 
                     {actions}

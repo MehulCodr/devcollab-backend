@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import AppShell from "@/components/AppShell";
-import Panel from "@/components/ui/Panel";
+import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 
 const emptyForm = {
@@ -160,70 +160,78 @@ export default function ProfilePage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Panel className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Bio</label>
-              <textarea
-                name="bio"
-                value={form.bio}
-                onChange={handleChange}
-                rows={4}
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TextAreaField label="Skills" name="skills" value={form.skills} onChange={handleChange} />
-              <TextAreaField label="Interests" name="interests" value={form.interests} onChange={handleChange} />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="border-b border-slate-800 pb-6 mb-6">
+              <h3 className="text-lg font-bold text-white mb-1">Basic Information</h3>
+              <p className="text-sm text-slate-400 mb-4">Update your profile details and bio.</p>
+              
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Hours per week
-                </label>
-                <input
-                  name="availabilityHoursPerWeek"
-                  type="number"
-                  min="0"
-                  max="80"
-                  value={form.availabilityHoursPerWeek}
+                <label className="block text-sm font-medium text-slate-300 mb-2">Bio</label>
+                <textarea
+                  name="bio"
+                  value={form.bio}
                   onChange={handleChange}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Experience
-                </label>
-                <select
-                  name="experienceLevel"
-                  value={form.experienceLevel}
-                  onChange={handleChange}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-                >
-                  <option value="beginner">Beginner</option>
-                  <option value="junior">Junior</option>
-                  <option value="mid">Mid</option>
-                  <option value="senior">Senior</option>
-                  <option value="lead">Lead</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Timezone</label>
-                <input
-                  name="timezone"
-                  value={form.timezone}
-                  onChange={handleChange}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                  rows={4}
+                  className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border-b border-slate-800 pb-6 mb-6">
+              <h3 className="text-lg font-bold text-white mb-1">Professional Details</h3>
+              <p className="text-sm text-slate-400 mb-4">Your skills, experience and role preferences.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <TextAreaField label="Skills" name="skills" value={form.skills} onChange={handleChange} />
+                <TextAreaField label="Interests" name="interests" value={form.interests} onChange={handleChange} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Hours per week
+                  </label>
+                  <input
+                    name="availabilityHoursPerWeek"
+                    type="number"
+                    min="0"
+                    max="80"
+                    value={form.availabilityHoursPerWeek}
+                    onChange={handleChange}
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Experience
+                  </label>
+                  <select
+                    name="experienceLevel"
+                    value={form.experienceLevel}
+                    onChange={handleChange}
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
+                  >
+                    <option value="beginner">Beginner</option>
+                    <option value="junior">Junior</option>
+                    <option value="mid">Mid</option>
+                    <option value="senior">Senior</option>
+                    <option value="lead">Lead</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Timezone</label>
+                  <input
+                    name="timezone"
+                    value={form.timezone}
+                    onChange={handleChange}
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Preferred roles
@@ -232,11 +240,16 @@ export default function ProfilePage() {
                   name="preferredRoles"
                   value={form.preferredRoles}
                   onChange={handleChange}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                  className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
+            </div>
 
-              <div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">Links & Portfolio</h3>
+              <p className="text-sm text-slate-400 mb-4">Where can people find your work?</p>
+              
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   GitHub username
                 </label>
@@ -244,54 +257,67 @@ export default function ProfilePage() {
                   name="githubUsername"
                   value={form.githubUsername}
                   onChange={handleChange}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                  className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Portfolio links
+                </label>
+                <textarea
+                  name="portfolioLinks"
+                  value={form.portfolioLinks}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="Portfolio | https://example.com"
+                  className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Portfolio links
-              </label>
-              <textarea
-                name="portfolioLinks"
-                value={form.portfolioLinks}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Portfolio | https://example.com"
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-              />
+            <div className="pt-4 border-t border-slate-800">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500 disabled:opacity-60 transition-colors"
+              >
+                {saving ? "Saving changes..." : "Save Profile"}
+              </button>
+            </div>
+          </form>
+        </Card>
+
+        <div className="space-y-6">
+          <Card>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-2xl font-bold text-white">
+                {profile?.user?.name?.charAt(0) || "U"}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">{profile?.user?.name}</h2>
+                <p className="text-slate-400 text-sm">{profile?.user?.email}</p>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60"
-            >
-              {saving ? "Saving..." : "Save profile"}
-            </button>
-          </form>
-        </Panel>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <Summary label="Availability" value={`${profile?.availabilityHoursPerWeek ?? 0}h / wk`} />
+              <Summary label="Level" value={profile?.experienceLevel || "junior"} />
+            </div>
 
-        <Panel>
-          <h2 className="text-xl font-bold">{profile?.user?.name}</h2>
-          <p className="text-slate-400 mt-1">{profile?.user?.email}</p>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-slate-400 mb-2">Top Skills</p>
+                <TagList values={profile?.skills} variant="blue" />
+              </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <Summary label="Hours" value={`${profile?.availabilityHoursPerWeek ?? 0}/wk`} />
-            <Summary label="Level" value={profile?.experienceLevel || "junior"} />
-          </div>
-
-          <div className="mt-5">
-            <p className="text-sm font-medium text-slate-300 mb-3">Skills</p>
-            <TagList values={profile?.skills} variant="blue" />
-          </div>
-
-          <div className="mt-5">
-            <p className="text-sm font-medium text-slate-300 mb-3">Interests</p>
-            <TagList values={profile?.interests} />
-          </div>
-        </Panel>
+              <div>
+                <p className="text-sm font-medium text-slate-400 mb-2">Interests</p>
+                <TagList values={profile?.interests} />
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
 
       <div className="mt-6">
@@ -424,7 +450,7 @@ function SecurityPanel() {
   };
 
   return (
-    <Panel>
+    <Card>
       <div>
         <h2 className="text-xl font-bold">Security</h2>
         <p className="text-sm text-slate-400 mt-1">Change your password.</p>
@@ -450,7 +476,7 @@ function SecurityPanel() {
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
               required
             />
           </div>
@@ -461,7 +487,7 @@ function SecurityPanel() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
               required
               minLength={8}
             />
@@ -473,7 +499,7 @@ function SecurityPanel() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 transition-colors"
               required
               minLength={8}
             />
@@ -482,7 +508,7 @@ function SecurityPanel() {
           <button
             type="submit"
             disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60"
+            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60 transition-colors"
           >
             {loading ? "Requesting..." : "Change Password"}
           </button>
@@ -496,7 +522,7 @@ function SecurityPanel() {
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
               placeholder="123456"
-              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 text-center tracking-[0.5em] text-lg font-mono"
+              className="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 text-center tracking-[0.5em] text-lg font-mono transition-colors"
               required
               maxLength={6}
               minLength={6}
@@ -506,7 +532,7 @@ function SecurityPanel() {
           <button
             type="submit"
             disabled={loading || otp.length < 6}
-            className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60"
+            className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60 transition-colors"
           >
             {loading ? "Verifying..." : "Verify & Change Password"}
           </button>
@@ -523,6 +549,6 @@ function SecurityPanel() {
           </div>
         </form>
       )}
-    </Panel>
+    </Card>
   );
 }
