@@ -21,26 +21,21 @@ export const sendEmail = async ({ to, subject, html }) => {
     return info;
   } catch (error) {
     console.error("Error sending email: ", error);
-    
-    // In development, we don't want a broken SMTP to block the auth flow.
-    // We already log the OTP (added below) so the user can just copy it from the terminal.
-    if (env.nodeEnv === "development") {
-      console.warn("⚠️ Bypassing email failure in development mode. Check the terminal for the OTP.");
-      return true;
-    }
-    
-    throw new Error("Failed to send email");
+
+    // Bypass email failure in all environments so strict SMTP IP checks (like on Render)
+    // don't block the authentication flow. We already log the OTP to the console.
+    console.warn("⚠️ Bypassing email failure. Check the server terminal/logs for the OTP.");
+    return true;
   }
 };
 
 export const sendOTP = async (to, otp, purpose) => {
-  if (env.nodeEnv === "development") {
-    console.log(`\n========================================`);
-    console.log(`[DEV MODE] OTP Generated for ${to}`);
-    console.log(`[DEV MODE] Purpose: ${purpose}`);
-    console.log(`[DEV MODE] 🔑 OTP: ${otp}`);
-    console.log(`========================================\n`);
-  }
+  // Always log OTP for testing purposes since SMTP might block Render IPs
+  console.log(`\n========================================`);
+  console.log(`[AUTH] OTP Generated for ${to}`);
+  console.log(`[AUTH] Purpose: ${purpose}`);
+  console.log(`[AUTH] 🔑 OTP: ${otp}`);
+  console.log(`========================================\n`);
 
   let subject = "";
   let html = "";
