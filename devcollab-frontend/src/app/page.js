@@ -77,13 +77,6 @@ export default function LoginPage() {
     { icon: ShieldCheck, title: "Secure Authentication", desc: "Enterprise-grade security and role management." }
   ];
 
-  const stats = [
-    { label: "Organizations Created", value: "1,204", prefix: "+" },
-    { label: "Projects Managed", value: "8,532", prefix: "" },
-    { label: "Tasks Completed", value: "45K", prefix: "+" },
-    { label: "Developers Connected", value: "12K", prefix: "" }
-  ];
-
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col lg:flex-row font-sans">
       
@@ -106,7 +99,7 @@ export default function LoginPage() {
           </div>
 
           {/* Hero Content */}
-          <div className="max-w-2xl mb-12">
+          <div className="max-w-2xl mb-16">
             <h1 className="text-5xl xl:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1]">
               Build. Collaborate.<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Ship Faster.</span>
@@ -114,18 +107,6 @@ export default function LoginPage() {
             <p className="text-lg text-slate-400 leading-relaxed">
               The ultimate workspace OS for modern engineering teams. Bring your projects, tasks, and developers together in one intelligent, unified platform.
             </p>
-          </div>
-
-          {/* Stats Row */}
-          <div className="grid grid-cols-4 gap-6 mb-16 border-y border-slate-800/50 py-8">
-            {stats.map((stat, idx) => (
-              <div key={idx} className="flex flex-col">
-                <span className="text-3xl font-bold text-white mb-1">
-                  {stat.prefix}{stat.value}
-                </span>
-                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">{stat.label}</span>
-              </div>
-            ))}
           </div>
 
           <div className="flex gap-12">
