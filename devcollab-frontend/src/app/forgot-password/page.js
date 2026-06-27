@@ -7,12 +7,13 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { forgotPassword, resetPassword, resendOTP } = useAuth();
+  const { forgotPassword, verifyResetOTP, resetPassword, resendOTP } = useAuth();
 
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [resetToken, setResetToken] = useState("");
   const [countdown, setCountdown] = useState(0);
 
   const [error, setError] = useState("");
@@ -45,6 +46,24 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const handleVerifyOTP = async (event) => {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+
+    try {
+      const res = await verifyResetOTP({ email, otp });
+      setResetToken(res.resetToken);
+      setStep(3);
+      setSuccess("OTP verified. Please enter your new password.");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleReset = async (event) => {
     event.preventDefault();
     setError("");
@@ -52,7 +71,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      await resetPassword({ email, otp, newPassword });
+      await resetPassword({ resetToken, newPassword });
       setSuccess("Password reset successfully. Redirecting to login...");
       setTimeout(() => {
         router.push("/");
@@ -69,7 +88,7 @@ export default function ForgotPasswordPage() {
     setSuccess("");
     setLoading(true);
     try {
-      await resendOTP({ email, purpose: "reset_password" });
+      await resendOTP({ email, purpose: "forgot_password" });
       setCountdown(60);
       setSuccess("OTP resent successfully.");
     } catch (error) {
@@ -86,7 +105,9 @@ export default function ForgotPasswordPage() {
           <p className="text-sm text-blue-400 font-medium">DevCollaborator</p>
           <h1 className="text-3xl font-bold mt-2">Reset Password</h1>
           <p className="text-slate-400 mt-3">
-            {step === 1 ? "Enter your email to receive an OTP." : "Enter the OTP and your new password."}
+            {step === 1 && "Enter your email to receive an OTP."}
+            {step === 2 && "Enter the OTP sent to your email."}
+            {step === 3 && "Enter your new password."}
           </p>
         </div>
 
@@ -102,7 +123,7 @@ export default function ForgotPasswordPage() {
           </p>
         )}
 
-        {step === 1 ? (
+        {step === 1 && (
           <form onSubmit={handleRequestOTP} className="mt-8 space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
@@ -124,8 +145,10 @@ export default function ForgotPasswordPage() {
               {loading ? "Requesting..." : "Send Reset OTP"}
             </button>
           </form>
-        ) : (
-          <form onSubmit={handleReset} className="mt-8 space-y-5">
+        )}
+
+        {step === 2 && (
+          <form onSubmit={handleVerifyOTP} className="mt-8 space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">6-Digit OTP</label>
               <input
@@ -140,6 +163,29 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
+            <button
+              type="submit"
+              disabled={loading || otp.length < 6}
+              className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? "Verifying..." : "Verify OTP"}
+            </button>
+
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={loading || countdown > 0}
+                className="text-sm text-blue-400 hover:text-blue-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
+              >
+                {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {step === 3 && (
+          <form onSubmit={handleReset} className="mt-8 space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">New Password</label>
               <input
@@ -155,22 +201,11 @@ export default function ForgotPasswordPage() {
 
             <button
               type="submit"
-              disabled={loading || otp.length < 6 || !newPassword}
+              disabled={loading || !newPassword}
               className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? "Resetting..." : "Reset Password"}
             </button>
-
-            <div className="text-center pt-2">
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={loading || countdown > 0}
-                className="text-sm text-blue-400 hover:text-blue-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
-              >
-                {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
-              </button>
-            </div>
           </form>
         )}
 

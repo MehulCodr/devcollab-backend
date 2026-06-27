@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async ({ name, email, password }) => {
-    const response = await apiRequest("/auth/register", {
+    const response = await apiRequest("/auth/signup", {
       method: "POST",
       body: JSON.stringify({
         name,
@@ -79,18 +79,34 @@ export function AuthProvider({ children }) {
     return response.data;
   };
 
-  const resetPassword = async ({ email, otp, newPassword }) => {
+  const verifyResetOTP = async ({ email, otp }) => {
+    const response = await apiRequest("/auth/verify-reset-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, otp })
+    });
+    return response.data; // returns { resetToken }
+  };
+
+  const resetPassword = async ({ resetToken, newPassword }) => {
     const response = await apiRequest("/auth/reset-password", {
       method: "POST",
-      body: JSON.stringify({ email, otp, newPassword })
+      body: JSON.stringify({ resetToken, newPassword })
     });
     return response.data;
   };
 
-  const changePassword = async ({ currentPassword, newPassword }) => {
+  const sendChangePasswordOTP = async ({ currentPassword }) => {
+    const response = await apiRequest("/auth/send-change-password-otp", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword })
+    });
+    return response.data;
+  };
+
+  const changePassword = async ({ currentPassword, newPassword, confirmPassword, otp }) => {
     const response = await apiRequest("/auth/change-password", {
       method: "POST",
-      body: JSON.stringify({ currentPassword, newPassword })
+      body: JSON.stringify({ currentPassword, newPassword, confirmPassword, otp })
     });
     return response.data;
   };
@@ -135,7 +151,9 @@ export function AuthProvider({ children }) {
         verifySignupOTP,
         resendOTP,
         forgotPassword,
+        verifyResetOTP,
         resetPassword,
+        sendChangePasswordOTP,
         changePassword,
         logout,
         isAuthenticated: Boolean(user)

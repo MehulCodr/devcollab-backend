@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import AppShell from "@/components/AppShell";
 import Panel from "@/components/ui/Panel";
 import Badge from "@/components/ui/Badge";
@@ -292,6 +293,10 @@ export default function ProfilePage() {
           </div>
         </Panel>
       </div>
+
+      <div className="mt-6">
+        <SecurityPanel />
+      </div>
     </AppShell>
   );
 }
@@ -333,5 +338,191 @@ function TagList({ values = [], variant = "default" }) {
         </Badge>
       ))}
     </div>
+  );
+}
+
+function SecurityPanel() {
+  const { sendChangePasswordOTP, changePassword, resendOTP, user } = useAuth();
+  
+  const [step, setStep] = useState(1);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => setCountdown((c) => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
+
+  const handleRequestOTP = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    
+    if (newPassword !== confirmPassword) {
+      return setError("New passwords do not match.");
+    }
+    if (newPassword.length < 8) {
+      return setError("Password must be at least 8 characters long.");
+    }
+    
+    setLoading(true);
+    try {
+      await sendChangePasswordOTP({ currentPassword });
+      setStep(2);
+      setCountdown(60);
+      setMessage("OTP sent to your email.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
+    try {
+      await changePassword({ currentPassword, newPassword, confirmPassword, otp });
+      setStep(1);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setOtp("");
+      setMessage("Password changed successfully.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    setMessage("");
+    setLoading(true);
+    try {
+      await resendOTP({ email: user?.email, purpose: "change_password" });
+      setCountdown(60);
+      setMessage("OTP resent successfully.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Panel>
+      <div>
+        <h2 className="text-xl font-bold">Security</h2>
+        <p className="text-sm text-slate-400 mt-1">Change your password.</p>
+      </div>
+
+      {error && (
+        <p className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-300">
+          {error}
+        </p>
+      )}
+      
+      {message && (
+        <p className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-sm text-emerald-300">
+          {message}
+        </p>
+      )}
+
+      {step === 1 ? (
+        <form onSubmit={handleRequestOTP} className="mt-6 space-y-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Current Password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              required
+              minLength={8}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Confirm New Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+              required
+              minLength={8}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+            className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60"
+          >
+            {loading ? "Requesting..." : "Change Password"}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerifyOTP} className="mt-6 space-y-4 max-w-md">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">6-Digit OTP</label>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="123456"
+              className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500 text-center tracking-[0.5em] text-lg font-mono"
+              required
+              maxLength={6}
+              minLength={6}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || otp.length < 6}
+            className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60"
+          >
+            {loading ? "Verifying..." : "Verify & Change Password"}
+          </button>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={loading || countdown > 0}
+              className="text-sm text-blue-400 hover:text-blue-300 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
+            >
+              {countdown > 0 ? `Resend OTP in ${countdown}s` : "Resend OTP"}
+            </button>
+          </div>
+        </form>
+      )}
+    </Panel>
   );
 }

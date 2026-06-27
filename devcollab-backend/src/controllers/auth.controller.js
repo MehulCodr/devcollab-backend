@@ -50,7 +50,7 @@ const sendAuthCookies = ({ res, accessToken, refreshToken }) => {
 
 
 
-export const registerUser = asyncHandler(async (req, res) => {
+export const signupUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
   if (!name?.trim() || !email?.trim() || !password?.trim()) {
@@ -62,20 +62,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (existingUser) {
-    if (existingUser.isEmailVerified) {
-      throw new ApiError(409, "User already exists with this email");
-    }
-    // If not verified, we will resend OTP and update password
-    existingUser.name = name;
-    existingUser.password = password;
-    await existingUser.save();
-  } else {
-    await User.create({
-      name,
-      email,
-      password,
-      isEmailVerified: false
-    });
+    throw new ApiError(409, "User already exists with this email");
   }
 
   // Generate OTP
@@ -88,7 +75,8 @@ export const registerUser = asyncHandler(async (req, res) => {
     email: email.toLowerCase(),
     otpHash: hashedOTP,
     purpose: "signup",
-    expiresAt: getOTPExpiry()
+    expiresAt: getOTPExpiry(),
+    userData: { name, password }
   });
 
   await sendOTP(email, otp, "signup");
@@ -109,9 +97,8 @@ export const verifySignupOTP = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Email and OTP are required");
   }
 
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user) throw new ApiError(404, "User not found");
-  if (user.isEmailVerified) throw new ApiError(400, "Email already verified");
+  const existingUser = await User.findOne({ email: email.toLowerCase() });
+  if (existingUser) throw new ApiError(400, "Email already verified");
 
   const otpRecord = await OTP.findOne({ email: email.toLowerCase(), purpose: "signup" }).sort({ createdAt: -1 });
 
@@ -128,9 +115,14 @@ export const verifySignupOTP = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid OTP");
   }
 
-  // Mark as verified
-  user.isEmailVerified = true;
-  await user.save({ validateBeforeSave: false });
+  // Create user only after successful verification
+  const user = await User.create({
+    name: otpRecord.userData.name,
+    email: otpRecord.email,
+    password: otpRecord.userData.password,
+    isEmailVerified: true
+  });
+
   await OTP.deleteMany({ email: email.toLowerCase(), purpose: "signup" });
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
@@ -147,11 +139,18 @@ export const resendOTP = asyncHandler(async (req, res) => {
   const { email, purpose } = req.body;
   if (!email || !purpose) throw new ApiError(400, "Email and purpose are required");
 
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user) throw new ApiError(404, "User not found");
+  let userData = null;
 
-  if (purpose === "signup" && user.isEmailVerified) {
-    throw new ApiError(400, "Email already verified");
+  if (purpose === "signup") {
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) throw new ApiError(400, "Email already verified");
+
+    const existingOTP = await OTP.findOne({ email: email.toLowerCase(), purpose: "signup" }).sort({ createdAt: -1 });
+    if (!existingOTP) throw new ApiError(400, "No signup request found. Please register again.");
+    userData = existingOTP.userData;
+  } else if (purpose === "forgot_password" || purpose === "change_password") {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) throw new ApiError(404, "User not found");
   }
 
   const otp = generateOTP();
@@ -163,7 +162,8 @@ export const resendOTP = asyncHandler(async (req, res) => {
     email: email.toLowerCase(),
     otpHash: hashedOTP,
     purpose,
-    expiresAt: getOTPExpiry()
+    expiresAt: getOTPExpiry(),
+    ...(userData && { userData })
   });
 
   await sendOTP(email, otp, purpose);
@@ -295,32 +295,25 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const otp = generateOTP();
   const hashedOTP = await hashOTP(otp);
 
-  await OTP.deleteMany({ email: email.toLowerCase(), purpose: "reset_password" });
+  await OTP.deleteMany({ email: email.toLowerCase(), purpose: "forgot_password" });
 
   await OTP.create({
     email: email.toLowerCase(),
     otpHash: hashedOTP,
-    purpose: "reset_password",
+    purpose: "forgot_password",
     expiresAt: getOTPExpiry()
   });
 
-  await sendOTP(email, otp, "reset_password");
+  await sendOTP(email, otp, "forgot_password");
 
   return res.status(200).json(new ApiResponse(200, {}, "If your email is registered, you will receive an OTP."));
 });
 
-export const resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  if (!email || !otp || !newPassword) {
-    throw new ApiError(400, "Email, OTP and new password are required");
-  }
+export const verifyResetOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) throw new ApiError(400, "Email and OTP are required");
 
-  if (newPassword.length < 8) {
-    throw new ApiError(400, "Password must be at least 8 characters long");
-  }
-
-  const otpRecord = await OTP.findOne({ email: email.toLowerCase(), purpose: "reset_password" }).sort({ createdAt: -1 });
-
+  const otpRecord = await OTP.findOne({ email: email.toLowerCase(), purpose: "forgot_password" }).sort({ createdAt: -1 });
   if (!otpRecord) throw new ApiError(400, "OTP expired or not found");
 
   const isValid = await verifyOTP(otp, otpRecord.otpHash);
@@ -334,22 +327,60 @@ export const resetPassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid OTP");
   }
 
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
   if (!user) throw new ApiError(404, "User not found");
 
-  user.password = newPassword;
-  await user.save();
+  await OTP.deleteMany({ email: email.toLowerCase(), purpose: "forgot_password" });
 
-  await OTP.deleteMany({ email: email.toLowerCase(), purpose: "reset_password" });
+  const secret = env.jwtAccessSecret + user.password;
+  const resetToken = jwt.sign({ email: user.email }, secret, { expiresIn: '15m' });
+
+  return res.status(200).json(new ApiResponse(200, { resetToken }, "OTP verified successfully."));
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+  if (!resetToken || !newPassword) {
+    throw new ApiError(400, "Reset token and new password are required");
+  }
+
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "Password must be at least 8 characters long");
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.decode(resetToken);
+  } catch (err) {
+    throw new ApiError(400, "Invalid reset token");
+  }
+
+  if (!decoded || !decoded.email) {
+    throw new ApiError(400, "Invalid reset token payload");
+  }
+
+  const user = await User.findOne({ email: decoded.email }).select("+password");
+  if (!user) throw new ApiError(404, "User not found");
+
+  const secret = env.jwtAccessSecret + user.password;
+  try {
+    jwt.verify(resetToken, secret);
+  } catch (err) {
+    throw new ApiError(400, "Invalid or expired reset token");
+  }
+
+  user.password = newPassword;
+  user.refreshToken = undefined;
+  await user.save();
 
   return res.status(200).json(new ApiResponse(200, {}, "Password reset successfully. You can now login."));
 });
 
-export const changePassword = asyncHandler(async (req, res) => {
-  const { currentPassword, newPassword } = req.body;
+export const sendChangePasswordOTP = asyncHandler(async (req, res) => {
+  const { currentPassword } = req.body;
   
-  if (!currentPassword || !newPassword) {
-    throw new ApiError(400, "Current and new passwords are required");
+  if (!currentPassword) {
+    throw new ApiError(400, "Current password is required");
   }
 
   const user = await User.findById(req.user._id).select("+password");
@@ -359,8 +390,68 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid current password");
   }
 
+  const otp = generateOTP();
+  const hashedOTP = await hashOTP(otp);
+
+  await OTP.deleteMany({ email: user.email, purpose: "change_password" });
+
+  await OTP.create({
+    email: user.email,
+    otpHash: hashedOTP,
+    purpose: "change_password",
+    expiresAt: getOTPExpiry()
+  });
+
+  await sendOTP(user.email, otp, "change_password");
+
+  return res.status(200).json(new ApiResponse(200, {}, "OTP sent successfully to your email."));
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword, otp } = req.body;
+  
+  if (!currentPassword || !newPassword || !confirmPassword || !otp) {
+    throw new ApiError(400, "Current password, new password, confirm password, and OTP are required");
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new ApiError(400, "New password and confirm password do not match");
+  }
+
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "Password must be at least 8 characters long");
+  }
+
+  const user = await User.findById(req.user._id).select("+password");
+  
+  const isPasswordValid = await user.isPasswordCorrect(currentPassword);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid current password");
+  }
+
+  if (currentPassword === newPassword) {
+    throw new ApiError(400, "New password must be different from current password");
+  }
+
+  const otpRecord = await OTP.findOne({ email: user.email, purpose: "change_password" }).sort({ createdAt: -1 });
+  if (!otpRecord) throw new ApiError(400, "OTP expired or not found");
+
+  const isValid = await verifyOTP(otp, otpRecord.otpHash);
+  if (!isValid) {
+    otpRecord.attempts += 1;
+    if (otpRecord.attempts >= 3) {
+      await OTP.findByIdAndDelete(otpRecord._id);
+      throw new ApiError(400, "Too many failed attempts. Please request a new OTP.");
+    }
+    await otpRecord.save();
+    throw new ApiError(400, "Invalid OTP");
+  }
+
   user.password = newPassword;
+  user.refreshToken = undefined;
   await user.save();
+
+  await OTP.deleteMany({ email: user.email, purpose: "change_password" });
 
   return res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
 });
