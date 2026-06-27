@@ -50,9 +50,49 @@ export function AuthProvider({ children }) {
       })
     });
 
+    return response.data; // returns { requiresOtp: true, email }
+  };
+
+  const verifySignupOTP = async ({ email, otp }) => {
+    const response = await apiRequest("/auth/verify-signup", {
+      method: "POST",
+      body: JSON.stringify({ email, otp })
+    });
     setAuthTokens(response.data);
     setUser(response.data.user);
     return response.data.user;
+  };
+
+  const resendOTP = async ({ email, purpose }) => {
+    const response = await apiRequest("/auth/resend-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, purpose })
+    });
+    return response.data;
+  };
+
+  const forgotPassword = async ({ email }) => {
+    const response = await apiRequest("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email })
+    });
+    return response.data;
+  };
+
+  const resetPassword = async ({ email, otp, newPassword }) => {
+    const response = await apiRequest("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, otp, newPassword })
+    });
+    return response.data;
+  };
+
+  const changePassword = async ({ currentPassword, newPassword }) => {
+    const response = await apiRequest("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    return response.data;
   };
 
   const logout = async () => {
@@ -92,6 +132,11 @@ export function AuthProvider({ children }) {
         checkAuth,
         login,
         register,
+        verifySignupOTP,
+        resendOTP,
+        forgotPassword,
+        resetPassword,
+        changePassword,
         logout,
         isAuthenticated: Boolean(user)
       }}

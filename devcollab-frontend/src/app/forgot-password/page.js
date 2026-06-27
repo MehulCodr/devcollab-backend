@@ -1,32 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
-export default function RegisterPage() {
+export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { register, verifySignupOTP, resendOTP, user, authLoading } = useAuth();
+  const { forgotPassword, resetPassword, resendOTP } = useAuth();
 
-  const [step, setStep] = useState(1); // 1: details, 2: OTP
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [countdown, setCountdown] = useState(0);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.replace("/dashboard");
-    }
-  }, [authLoading, user, router]);
 
   useEffect(() => {
     let timer;
@@ -36,27 +27,17 @@ export default function RegisterPage() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleChange = (event) => {
-    setForm((previous) => ({
-      ...previous,
-      [event.target.name]: event.target.value
-    }));
-  };
-
-  const handleRegister = async (event) => {
+  const handleRequestOTP = async (event) => {
     event.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      const res = await register(form);
-      if (res.requiresOtp) {
-        setStep(2);
-        setCountdown(60);
-        setSuccess("OTP sent to your email.");
-      } else {
-        router.push("/dashboard");
-      }
+      await forgotPassword({ email });
+      setStep(2);
+      setCountdown(60);
+      setSuccess("OTP sent to your email (if registered).");
     } catch (error) {
       setError(error.message);
     } finally {
@@ -64,14 +45,18 @@ export default function RegisterPage() {
     }
   };
 
-  const handleVerify = async (event) => {
+  const handleReset = async (event) => {
     event.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
-      await verifySignupOTP({ email: form.email, otp });
-      router.push("/dashboard");
+      await resetPassword({ email, otp, newPassword });
+      setSuccess("Password reset successfully. Redirecting to login...");
+      setTimeout(() => {
+        router.push("/");
+      }, 2000);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -84,7 +69,7 @@ export default function RegisterPage() {
     setSuccess("");
     setLoading(true);
     try {
-      await resendOTP({ email: form.email, purpose: "signup" });
+      await resendOTP({ email, purpose: "reset_password" });
       setCountdown(60);
       setSuccess("OTP resent successfully.");
     } catch (error) {
@@ -94,22 +79,14 @@ export default function RegisterPage() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <p className="text-slate-400">Checking session...</p>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4">
       <section className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-8 shadow-xl">
         <div>
           <p className="text-sm text-blue-400 font-medium">DevCollaborator</p>
-          <h1 className="text-3xl font-bold mt-2">Create your account</h1>
+          <h1 className="text-3xl font-bold mt-2">Reset Password</h1>
           <p className="text-slate-400 mt-3">
-            {step === 1 ? "Register and jump straight into your workspace." : "Enter the 6-digit OTP sent to your email."}
+            {step === 1 ? "Enter your email to receive an OTP." : "Enter the OTP and your new password."}
           </p>
         </div>
 
@@ -118,7 +95,7 @@ export default function RegisterPage() {
             {error}
           </p>
         )}
-
+        
         {success && (
           <p className="mt-4 rounded-xl bg-green-500/10 border border-green-500/30 px-4 py-3 text-sm text-green-300">
             {success}
@@ -126,57 +103,29 @@ export default function RegisterPage() {
         )}
 
         {step === 1 ? (
-          <form onSubmit={handleRegister} className="mt-8 space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
-              <input
-                name="name"
-                type="text"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Test User"
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-
+          <form onSubmit={handleRequestOTP} className="mt-8 space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
               <input
-                name="email"
                 type="email"
-                value={form.email}
-                onChange={handleChange}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="test@example.com"
                 className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-              <input
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Password123"
-                className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
-                required
-                minLength={8}
-              />
-            </div>
-
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !email}
               className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Creating account..." : "Continue"}
+              {loading ? "Requesting..." : "Send Reset OTP"}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleVerify} className="mt-8 space-y-5">
+          <form onSubmit={handleReset} className="mt-8 space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">6-Digit OTP</label>
               <input
@@ -191,12 +140,25 @@ export default function RegisterPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">New Password</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="New Password"
+                className="w-full rounded-xl bg-slate-950 border border-slate-700 px-4 py-3 text-white outline-none focus:border-blue-500"
+                required
+                minLength={8}
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={loading || otp.length < 6}
+              disabled={loading || otp.length < 6 || !newPassword}
               className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Verifying..." : "Verify & Login"}
+              {loading ? "Resetting..." : "Reset Password"}
             </button>
 
             <div className="text-center pt-2">
@@ -212,14 +174,12 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === 1 && (
-          <p className="mt-6 text-center text-sm text-slate-400">
-            Already have an account?{" "}
-            <Link href="/" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-              Login
-            </Link>
-          </p>
-        )}
+        <p className="mt-6 text-center text-sm text-slate-400">
+          Remembered your password?{" "}
+          <Link href="/" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+            Login
+          </Link>
+        </p>
       </section>
     </main>
   );

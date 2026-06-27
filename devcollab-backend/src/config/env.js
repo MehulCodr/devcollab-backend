@@ -20,7 +20,12 @@ const requiredEnvVars = [
   "OPENAI_EMBEDDING_MODEL",
   "CLOUDINARY_CLOUD_NAME",
   "CLOUDINARY_API_KEY",
-  "CLOUDINARY_API_SECRET"
+  "CLOUDINARY_API_SECRET",
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_USER",
+  "SMTP_PASS",
+  "SMTP_FROM_EMAIL"
   // GEMINI_API_KEY is optional — falls back to heuristic-only if absent
 ];
 
@@ -51,5 +56,10 @@ export const env = {
   cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
-  geminiApiKey: process.env.GEMINI_API_KEY || null
+  geminiApiKey: process.env.GEMINI_API_KEY || null,
+  smtpHost: process.env.SMTP_HOST,
+  smtpPort: process.env.SMTP_PORT,
+  smtpUser: process.env.SMTP_USER,
+  smtpPass: process.env.SMTP_PASS,
+  smtpFromEmail: process.env.SMTP_FROM_EMAIL
 };
