@@ -18,7 +18,7 @@ export class BrevoProvider {
         body: JSON.stringify({
           sender: {
             name: "DevCollaborator System",
-            email: "noreply@devcollab.com"
+            email: "mehulgupta0910@gmail.com"
           },
           to: [{ email: to }],
           subject,

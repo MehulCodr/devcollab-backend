@@ -24,12 +24,12 @@ export class EmailService {
   }
 
   // ==========================================
-  // User Emails (Sent via Resend)
+  // User Emails (Sent via Brevo temporarily)
   // ==========================================
 
   static async sendSignupOTP(to, otp) {
     this._logOTP(to, "signup", otp);
-    return await ResendProvider.sendEmail({
+    return await BrevoProvider.sendEmail({
       to,
       subject: "Verify your DevCollaborator Account",
       html: signupOtpTemplate(otp)
@@ -38,7 +38,7 @@ export class EmailService {
 
   static async sendForgotPasswordOTP(to, otp) {
     this._logOTP(to, "forgot_password", otp);
-    return await ResendProvider.sendEmail({
+    return await BrevoProvider.sendEmail({
       to,
       subject: "Reset your DevCollaborator Password",
       html: forgotPasswordTemplate(otp)
@@ -47,7 +47,7 @@ export class EmailService {
 
   static async sendChangePasswordOTP(to, otp) {
     this._logOTP(to, "change_password", otp);
-    return await ResendProvider.sendEmail({
+    return await BrevoProvider.sendEmail({
       to,
       subject: "Change your DevCollaborator Password",
       html: changePasswordTemplate(otp)
@@ -56,7 +56,7 @@ export class EmailService {
 
   static async sendLoginOTP(to, otp) {
     this._logOTP(to, "login", otp);
-    return await ResendProvider.sendEmail({
+    return await BrevoProvider.sendEmail({
       to,
       subject: "Login to DevCollaborator",
       html: loginOtpTemplate(otp)
@@ -64,7 +64,7 @@ export class EmailService {
   }
 
   static async sendWelcomeEmail(to, name) {
-    return await ResendProvider.sendEmail({
+    return await BrevoProvider.sendEmail({
       to,
       subject: "Welcome to DevCollaborator!",
       html: welcomeTemplate(name)
