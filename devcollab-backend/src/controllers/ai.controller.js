@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateTaskSuggestionsWithAI } from "../services/ai.service.js";
+import { generateChatResponse } from "../services/ai/gemini.service.js";
 import { notifyTaskAssigned } from "../services/notification.service.js";
 
 const allowedStatuses = ["backlog", "todo", "in-progress", "review", "completed"];
@@ -302,4 +303,36 @@ export const createTasksFromSuggestions = asyncHandler(async (req, res) => {
     session.endSession();
     throw error;
   }
+});
+
+export const chatWithAI = asyncHandler(async (req, res) => {
+  const { message, conversationId, organizationId, projectId, history = [] } = req.body;
+
+  if (!message?.trim()) {
+    throw new ApiError(400, "Message is required");
+  }
+
+  const context = {
+    organizationId,
+    projectId,
+    userId: req.user._id,
+  };
+
+  const aiResponse = await generateChatResponse({
+    message,
+    history,
+    context
+  });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        reply: aiResponse.reply,
+        conversationId: conversationId || Date.now().toString(),
+        usage: aiResponse.usage,
+      },
+      "AI response generated successfully"
+    )
+  );
 });

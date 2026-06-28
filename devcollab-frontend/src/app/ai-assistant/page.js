@@ -4,6 +4,9 @@ import { useState } from "react";
 import AppShell from "@/components/AppShell";
 import Card from "@/components/ui/Card";
 import { Sparkles, FileText, ListTodo, Lightbulb, MessageSquare, Send, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { apiRequest } from "@/lib/api";
 
 export default function AIAssistantPage() {
   const [messages, setMessages] = useState([
@@ -22,7 +25,7 @@ export default function AIAssistantPage() {
     { id: "next", icon: Lightbulb, label: "Suggest Next Steps", description: "What should you work on next?" }
   ];
 
-  const handleSend = (text = input) => {
+  const handleSend = async (text = input) => {
     if (!text.trim()) return;
 
     const newMessages = [...messages, { role: "user", content: text }];
@@ -30,14 +33,28 @@ export default function AIAssistantPage() {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      setIsTyping(false);
+    try {
+      const response = await apiRequest("/ai/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          message: text,
+          history: messages.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      
       setMessages([...newMessages, { 
         role: "assistant", 
-        content: `I can certainly help with "${text}". This feature is currently running in simulation mode, but in the final version, I will connect to the DevCollaborator AI engine to process this request properly based on your organization's context.` 
+        content: response.data.reply 
       }]);
-    }, 1500);
+    } catch (error) {
+      console.error("AI Assistant Error:", error);
+      setMessages([...newMessages, { 
+        role: "assistant", 
+        content: `Sorry, I encountered an error: ${error.message || "Failed to generate response."}` 
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -90,9 +107,35 @@ export default function AIAssistantPage() {
                 <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user' 
                     ? 'bg-blue-600 text-white rounded-tr-sm' 
-                    : 'bg-slate-900 border border-slate-800 text-slate-300 rounded-tl-sm'
+                    : 'bg-slate-900 border border-slate-800 text-slate-300 rounded-tl-sm markdown-body'
                 }`}>
-                  {msg.content}
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    className="prose prose-invert max-w-none"
+                    components={{
+                      p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                      a: ({node, ...props}) => <a className="text-blue-400 hover:underline" {...props} />,
+                      ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                      ol: ({node, ...props}) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                      li: ({node, ...props}) => <li className="mb-1" {...props} />,
+                      code: ({node, inline, className, children, ...props}) => {
+                        const match = /language-(\w+)/.exec(className || '');
+                        return !inline ? (
+                          <div className="relative rounded-md bg-slate-950 p-4 my-2 overflow-x-auto border border-slate-800">
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          </div>
+                        ) : (
+                          <code className="bg-slate-800 px-1.5 py-0.5 rounded text-blue-300 text-xs font-mono" {...props}>
+                            {children}
+                          </code>
+                        )
+                      }
+                    }}
+                  >
+                    {msg.content}
+                  </ReactMarkdown>
                 </div>
               </div>
             ))}

@@ -1,14 +1,18 @@
 import { Router } from "express";
 import {
   createTasksFromSuggestions,
-  generateTaskSuggestions
+  generateTaskSuggestions,
+  chatWithAI
 } from "../controllers/ai.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { requireProjectAccess } from "../middlewares/project.middleware.js";
+import { aiRateLimiter } from "../middlewares/aiRateLimiter.js";
 
 const router = Router();
 
 router.use(verifyJWT);
+
+router.post("/chat", aiRateLimiter, chatWithAI);
 
 router.post(
   "/projects/:projectId/task-suggestions",
